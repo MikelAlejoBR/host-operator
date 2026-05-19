@@ -1,0 +1,25 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: openclaw-tier
+objects:
+- kind: NSTemplateTier
+  apiVersion: toolchain.dev.openshift.com/v1alpha1
+  metadata:
+    name: openclaw
+    namespace: ${NAMESPACE}
+  spec:
+    clusterResources:
+      templateRef: ${CLUSTER_TEMPL_REF}
+    namespaces:
+    - templateRef: ${OPENCLAW_TEMPL_REF}
+    spaceRoles:
+      admin:
+        templateRef: ${ADMIN_TEMPL_REF}
+    spaceRequestConfig:
+      serviceAccountName: namespace-manager
+parameters:
+- name: NAMESPACE
+- name: CLUSTER_TEMPL_REF
+- name: OPENCLAW_TEMPL_REF
+- name: ADMIN_TEMPL_REF

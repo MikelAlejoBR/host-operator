@@ -1,0 +1,133 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: openclaw-cluster-resources
+objects:
+# Tight ClusterResourceQuotas scoped to the -openclaw sub-space only.
+# The -openclaw namespace has fixed, predictable resource needs
+# (gateway pod, proxy pod, and their supporting resources).
+- apiVersion: quota.openshift.io/v1
+  kind: ClusterResourceQuota
+  metadata:
+    name: for-${SPACE_NAME}-deployments
+  spec:
+    quota:
+      hard:
+        count/deployments.apps: "3"
+        count/deploymentconfigs.apps: "0"
+        count/pods: "5"
+        count/virtualmachines.kubevirt.io: "0"
+    selector:
+      annotations: null
+      labels:
+        matchLabels:
+          toolchain.dev.openshift.com/space: ${SPACE_NAME}
+- apiVersion: quota.openshift.io/v1
+  kind: ClusterResourceQuota
+  metadata:
+    name: for-${SPACE_NAME}-replicas
+  spec:
+    quota:
+      hard:
+        count/replicasets.apps: "3"
+        count/replicationcontrollers: "0"
+    selector:
+      annotations: null
+      labels:
+        matchLabels:
+          toolchain.dev.openshift.com/space: ${SPACE_NAME}
+- apiVersion: quota.openshift.io/v1
+  kind: ClusterResourceQuota
+  metadata:
+    name: for-${SPACE_NAME}-routes
+  spec:
+    quota:
+      hard:
+        count/ingresses.extensions: "1"
+        count/routes.route.openshift.io: "1"
+    selector:
+      annotations: null
+      labels:
+        matchLabels:
+          toolchain.dev.openshift.com/space: ${SPACE_NAME}
+- apiVersion: quota.openshift.io/v1
+  kind: ClusterResourceQuota
+  metadata:
+    name: for-${SPACE_NAME}-jobs
+  spec:
+    quota:
+      hard:
+        count/jobs.batch: "0"
+        count/daemonsets.apps: "0"
+        count/cronjobs.batch: "0"
+        count/statefulsets.apps: "0"
+    selector:
+      annotations: null
+      labels:
+        matchLabels:
+          toolchain.dev.openshift.com/space: ${SPACE_NAME}
+- apiVersion: quota.openshift.io/v1
+  kind: ClusterResourceQuota
+  metadata:
+    name: for-${SPACE_NAME}-services
+  spec:
+    quota:
+      hard:
+        count/services: "3"
+        services.loadbalancers: '0'
+    selector:
+      annotations: null
+      labels:
+        matchLabels:
+          toolchain.dev.openshift.com/space: ${SPACE_NAME}
+- apiVersion: quota.openshift.io/v1
+  kind: ClusterResourceQuota
+  metadata:
+    name: for-${SPACE_NAME}-bc
+  spec:
+    quota:
+      hard:
+        count/buildconfigs.build.openshift.io: "0"
+    selector:
+      annotations: null
+      labels:
+        matchLabels:
+          toolchain.dev.openshift.com/space: ${SPACE_NAME}
+- apiVersion: quota.openshift.io/v1
+  kind: ClusterResourceQuota
+  metadata:
+    name: for-${SPACE_NAME}-secrets
+  spec:
+    quota:
+      hard:
+        count/secrets: "15"
+    selector:
+      annotations: null
+      labels:
+        matchLabels:
+          toolchain.dev.openshift.com/space: ${SPACE_NAME}
+- apiVersion: quota.openshift.io/v1
+  kind: ClusterResourceQuota
+  metadata:
+    name: for-${SPACE_NAME}-cm
+  spec:
+    quota:
+      hard:
+        count/configmaps: "10"
+    selector:
+      annotations: null
+      labels:
+        matchLabels:
+          toolchain.dev.openshift.com/space: ${SPACE_NAME}
+- apiVersion: toolchain.dev.openshift.com/v1alpha1
+  kind: Idler
+  metadata:
+    name: ${SPACE_NAME}-openclaw
+  spec:
+    timeoutSeconds: ${{IDLER_TIMEOUT_SECONDS}}
+parameters:
+- name: SPACE_NAME
+  required: true
+- name: IDLER_TIMEOUT_SECONDS
+  # 12 hours
+  value: "43200"

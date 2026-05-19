@@ -1,0 +1,90 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: openclaw-spacerole-admin
+objects:
+
+# User's narrow Role in the -openclaw namespace. Carefully scoped to protect
+# operator-managed Secrets (claw-proxy-ca, claw-gateway-token, llm-keys).
+# With disableInheritance: true on the SpaceRequest, this is the user's
+# ONLY RBAC in the sub-space — parent admin permissions do not cascade.
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: Role
+  metadata:
+    name: openclaw-user
+    namespace: ${NAMESPACE}
+  rules:
+  - apiGroups:
+    - claw.sandbox.redhat.com
+    resources:
+    - claws
+    verbs:
+    - get
+    - list
+    - watch
+    - create
+    - update
+    - patch
+    - delete
+  - apiGroups:
+    - ""
+    resources:
+    - pods
+    verbs:
+    - get
+    - list
+    - watch
+  - apiGroups:
+    - ""
+    resources:
+    - pods/log
+    verbs:
+    - get
+    - list
+  - apiGroups:
+    - ""
+    resources:
+    - events
+    verbs:
+    - get
+    - list
+    - watch
+  - apiGroups:
+    - route.openshift.io
+    resources:
+    - routes
+    verbs:
+    - get
+    - list
+    - watch
+  # Write-only access to Secrets for managing LLM API keys.
+  # Deliberately excludes get/list to prevent reading operator-managed
+  # Secrets like claw-proxy-ca. Users create Secrets via
+  # "kubectl create secret" (requires only create verb).
+  - apiGroups:
+    - ""
+    resources:
+    - secrets
+    verbs:
+    - create
+    - update
+    - patch
+    - delete
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: RoleBinding
+  metadata:
+    name: ${USERNAME}-openclaw-user
+    namespace: ${NAMESPACE}
+  roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: Role
+    name: openclaw-user
+  subjects:
+  - kind: User
+    name: ${USERNAME}
+
+parameters:
+- name: NAMESPACE
+  required: true
+- name: USERNAME
+  required: true
